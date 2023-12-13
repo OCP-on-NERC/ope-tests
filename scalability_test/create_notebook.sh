@@ -1,8 +1,17 @@
 #!/bin/bash
 
-while getopts n: ch; do
+create_resource_command=( oc create -f- )
+
+while getopts t:n:d ch; do
     case $ch in
-        n)  test_run_name=$OPTARG
+        t)  test_run_name=$OPTARG
+            ;;
+
+	    n)  namespace=$OPTARG
+            ;;
+
+	# Send manifests to stdout instead of creating resources
+        d)  create_resource_command=( cat )
             ;;
 
         *)  exit 2
@@ -12,7 +21,7 @@ done
 shift $(( OPTIND - 1 ))
 
 if [[ $# -ne 3 ]]; then
-    echo "Usage: $0 [-n <test-run-name>] <num_notebooks> <batch_size> <username>" >&2
+    echo "Usage: $0 [-d] [-n <namespace>] [-t <test-run-name>] <num_notebooks> <batch_size> <username>" >&2
     exit 1
 fi
 
@@ -27,6 +36,11 @@ username=$3
 
 if [[ -z $test_run_name ]]; then
     test_run_name="$(mktemp -u ope-test-"$username"-"$num_notebooks"-XXXXXX)"
+fi
+
+if [[ -z $namespace ]]; then
+    # use current namespace by default
+    namespace="$(oc config view --minify -o jsonpath='{.contexts[0].context.namespace}')"
 fi
 
 # ensure names are lower case
@@ -44,8 +58,9 @@ for ((i=0; i<num_notebooks; i+=batch_size)); do
         oc process -f test_resources.yaml --local \
             -p NOTEBOOK_NAME="$notebook_name" \
             -p TEST_RUN_NAME="$test_run_name" \
-            -p USERNAME="$username" |
-            oc create -f-
+            -p USERNAME="$username" \
+	    -p NAMESPACE="$namespace" |
+            "${create_resource_command[@]}"
     done
     # Wait for the current batch to finish before starting the next
     wait

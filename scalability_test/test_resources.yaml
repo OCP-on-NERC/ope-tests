@@ -7,6 +7,8 @@ parameters:
   required: true
 - name: USERNAME
   required: true
+- name: NAMESPACE
+  required: true
 - name: PVC_SIZE
   required: true
   value: "1Gi"
@@ -19,7 +21,7 @@ objects:
       notebooks.opendatahub.io/last-image-selection: 'base-ope-image:latest'
       notebooks.opendatahub.io/last-size-selection: X Small
       notebooks.opendatahub.io/oauth-logout-url: >-
-        https://rhods-dashboard-redhat-ods-applications.apps.shift.nerc.mghpcc.org/projects/ope-rhods-testing-1fef2f?notebookLogout=${NOTEBOOK_NAME}
+        https://rhods-dashboard-redhat-ods-applications.apps.shift.nerc.mghpcc.org/projects/${NAMESPACE}?notebookLogout=${NOTEBOOK_NAME}
       opendatahub.io/username: ${USERNAME}
       openshift.io/description: ''
       openshift.io/display-name: ${NOTEBOOK_NAME}
@@ -54,7 +56,7 @@ objects:
             readinessProbe:
               failureThreshold: 3
               httpGet:
-                path: /notebook/ope-rhods-testing-1fef2f/${NOTEBOOK_NAME}/api
+                path: /notebook/${NAMESPACE}/${NOTEBOOK_NAME}/api
                 port: notebook-port
                 scheme: HTTP
               initialDelaySeconds: 10
@@ -65,7 +67,7 @@ objects:
             livenessProbe:
               failureThreshold: 3
               httpGet:
-                path: /notebook/ope-rhods-testing-1fef2f/${NOTEBOOK_NAME}/api
+                path: /notebook/${NAMESPACE}/${NOTEBOOK_NAME}/api
                 port: notebook-port
                 scheme: HTTP
               initialDelaySeconds: 10
@@ -78,9 +80,9 @@ objects:
                   --ServerApp.port=8888
                                     --ServerApp.token=''
                                     --ServerApp.password=''
-                                    --ServerApp.base_url=/notebook/ope-rhods-testing-1fef2f/${NOTEBOOK_NAME}
+                                    --ServerApp.base_url=/notebook/${NAMESPACE}/${NOTEBOOK_NAME}
                                     --ServerApp.quit_button=False
-                                    --ServerApp.tornado_settings={"user":"${USERNAME}","hub_host":"https://rhods-dashboard-redhat-ods-applications.apps.shift.nerc.mghpcc.org","hub_prefix":"/projects/ope-rhods-testing-1fef2f"}
+                                    --ServerApp.tornado_settings={"user":"${USERNAME}","hub_host":"https://rhods-dashboard-redhat-ods-applications.apps.shift.nerc.mghpcc.org","hub_prefix":"/projects/${NAMESPACE}"}
               - name: JUPYTER_IMAGE
                 value: >-
                   image-registry.openshift-image-registry.svc:5000/redhat-ods-applications/base-ope-image:latest
@@ -158,7 +160,7 @@ objects:
               - >-
                 --openshift-sar={"verb":"get","resource":"notebooks","resourceAPIGroup":"kubeflow.org","resourceName":"${NOTEBOOK_NAME}","namespace":"$(NAMESPACE)"}
               - >-
-                --logout-url=https://rhods-dashboard-redhat-ods-applications.apps.shift.nerc.mghpcc.org/projects/ope-rhods-testing-1fef2f?notebookLogout=${NOTEBOOK_NAME}
+                --logout-url=https://rhods-dashboard-redhat-ods-applications.apps.shift.nerc.mghpcc.org/projects/${NAMESPACE}?notebookLogout=${NOTEBOOK_NAME}
         enableServiceLinks: false
         serviceAccountName: ${NOTEBOOK_NAME}
         volumes:

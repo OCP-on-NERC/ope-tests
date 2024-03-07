@@ -7,18 +7,20 @@ parameters:
   required: true
 - name: USERNAME
   required: true
+- name: IMAGE_NAME
+  required: true
 - name: NAMESPACE
   required: true
 - name: PVC_SIZE
   required: true
-  value: "1Gi"
+  value: "0.5Gi"
 objects:
 - apiVersion: kubeflow.org/v1beta1
   kind: Notebook
   metadata:
     annotations:
       notebooks.opendatahub.io/inject-oauth: 'true'
-      notebooks.opendatahub.io/last-image-selection: 'base-ope-image:latest'
+      notebooks.opendatahub.io/last-image-selection: ${IMAGE_NAME}
       notebooks.opendatahub.io/last-size-selection: X Small
       notebooks.opendatahub.io/oauth-logout-url: >-
         https://rhods-dashboard-redhat-ods-applications.apps.shift.nerc.mghpcc.org/projects/${NAMESPACE}?notebookLogout=${NOTEBOOK_NAME}
@@ -41,7 +43,8 @@ objects:
               - preference:
                   matchExpressions:
                     - key: nvidia.com/gpu.present
-                      operator: NotIn
+                      # set the value to 'true' to use nodes with GPUs
+                      operator: In
                       values:
                         - 'true'
                 weight: 1
@@ -50,9 +53,13 @@ objects:
               limits:
                 cpu: '1'
                 memory: 2Gi
+                # remove this line if no GPU is needed
+                nvidia.com/gpu: '1'
               requests:
                 cpu: '1'
                 memory: 2Gi
+                # remove this line if no GPU is needed
+                nvidia.com/gpu: '1'
             readinessProbe:
               failureThreshold: 3
               httpGet:
@@ -85,7 +92,7 @@ objects:
                                     --ServerApp.tornado_settings={"user":"${USERNAME}","hub_host":"https://rhods-dashboard-redhat-ods-applications.apps.shift.nerc.mghpcc.org","hub_prefix":"/projects/${NAMESPACE}"}
               - name: JUPYTER_IMAGE
                 value: >-
-                  image-registry.openshift-image-registry.svc:5000/redhat-ods-applications/base-ope-image:latest
+                  image-registry.openshift-image-registry.svc:5000/redhat-ods-applications/${IMAGE_NAME}
             ports:
               - containerPort: 8888
                 name: notebook-port
@@ -97,7 +104,7 @@ objects:
               - mountPath: /dev/shm
                 name: shm
             image: >-
-              image-registry.openshift-image-registry.svc:5000/redhat-ods-applications/base-ope-image:latest
+              image-registry.openshift-image-registry.svc:5000/redhat-ods-applications/${IMAGE_NAME}
             workingDir: /opt/app-root/src
           - resources:
               limits:

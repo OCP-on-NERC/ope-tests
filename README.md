@@ -25,7 +25,37 @@ To execute these tests:
     For example, to create 100 notebooks in batches of 10 at a time:
 
     ```
-    ./create_notebook.sh 100 10 your_username
+    ./create_notebook.sh 100 10 your_username image_name
+    ```
+
+    To launch notebooks with GPUs, use image `minimal-gpu:2023.1`; edit the test_resources.yaml:
+
+    ```
+    spec:
+        affinity:
+          nodeAffinity:
+            preferredDuringSchedulingIgnoredDuringExecution:
+              - preference:
+                  matchExpressions:
+                    - key: nvidia.com/gpu.present
+                      operator: In
+                      values:
+                        - 'true'
+                weight: 1
+    ```
+
+    Set the ${NOTEBOOK_NAME} container with gpu:
+
+    ```
+    - resources:
+        limits:
+          cpu: '1'
+          memory: 2Gi
+          nvidia.com/gpu: '1'
+        requests:
+          cpu: '1'
+          memory: 2Gi
+          nvidia.com/gpu: '1'
     ```
 
     Output will look something like:
@@ -40,6 +70,11 @@ To execute these tests:
     notebook.kubeflow.org/ope-test-your_username-100-t4y5rb-99 created
     persistentvolumeclaim/ope-test-your_username-100-t4y5rb-99 created
     All notebooks are starting. The total requests time is 10 seconds.
+    ```
+
+    To calculate the average notebooks startup time, run
+    ```
+    ./calculate_latency.sh <test_name> <namespace>
     ```
 
 ### Cleaning up

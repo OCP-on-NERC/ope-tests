@@ -20,8 +20,8 @@ while getopts t:n:d ch; do
 done
 shift $(( OPTIND - 1 ))
 
-if [[ $# -ne 3 ]]; then
-    echo "Usage: $0 [-d] [-n <namespace>] [-t <test-run-name>] <num_notebooks> <batch_size> <username>" >&2
+if [[ $# -ne 4 ]]; then
+    echo "Usage: $0 [-d] [-n <namespace>] [-t <test-run-name>] <num_notebooks> <batch_size> <username> <image_name>" >&2
     exit 1
 fi
 
@@ -33,6 +33,9 @@ batch_size=$2
 
 # RHODS username
 username=$3
+
+# Notebook imagename
+image_name=$4
 
 if [[ -z $test_run_name ]]; then
     test_run_name="$(mktemp -u ope-test-"$username"-"$num_notebooks"-XXXXXX)"
@@ -59,6 +62,7 @@ for ((i=0; i<num_notebooks; i+=batch_size)); do
             -p NOTEBOOK_NAME="$notebook_name" \
             -p TEST_RUN_NAME="$test_run_name" \
             -p USERNAME="$username" \
+            -p IMAGE_NAME="$image_name" \
 	    -p NAMESPACE="$namespace" |
             "${create_resource_command[@]}"
     done
@@ -67,3 +71,5 @@ for ((i=0; i<num_notebooks; i+=batch_size)); do
 done
 
 echo "All notebooks are starting. The total requests time is $SECONDS seconds."
+
+

@@ -17,6 +17,7 @@ Options:
 
 import requests
 import click
+import json
 
 api_url = 'https://api.tinyurl.com'
 
@@ -39,11 +40,9 @@ def add_tiny_url(token,url,domain,alias,tags,expires,description):
                 "expires_at":expires,
                 "description":description
         }
-	print(api_url+'/create')
-	print(headers)
-	print(req_json)
-        #response = requests.post(api_url+'/create', headers=headers, json=req_json)
-# Parse the response and return what you wish
+        response = requests.post(api_url+'/create', headers=headers, json=req_json)
+	resp = json.loads(response.text)
+	return resp['errors']==[]
 
 if __name__ == "__main__":
     add_tiny_url()

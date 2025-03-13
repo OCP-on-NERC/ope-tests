@@ -13,7 +13,9 @@ parameters:
   required: true
 - name: PVC_SIZE
   required: true
-  value: "0.5Gi"
+  value: "1Gi"
+- name: TOKEN
+  required: false
 objects:
 - apiVersion: kubeflow.org/v1beta1
   kind: Notebook
@@ -85,7 +87,7 @@ objects:
               - name: NOTEBOOK_ARGS
                 value: |-
                   --ServerApp.port=8888
-                                    --ServerApp.token=''
+                                    --ServerApp.token=${TOKEN}
                                     --ServerApp.password=''
                                     --ServerApp.base_url=/notebook/${NAMESPACE}/${NOTEBOOK_NAME}
                                     --ServerApp.quit_button=False
@@ -193,6 +195,7 @@ objects:
       app: ${NOTEBOOK_NAME}
       notebook-name: ${NOTEBOOK_NAME}
       ope-test-run: ${TEST_RUN_NAME}
+      opendatahub.io/dashboard: 'true'
   spec:
     accessModes:
       - ReadWriteOnce

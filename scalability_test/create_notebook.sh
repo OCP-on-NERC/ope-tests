@@ -7,7 +7,7 @@ shorten_url="false" # Default: do not shorten URLs
 rate_limit=0.5
 tiny_url_api_token=${TINY_URL_API_TOKEN:-""} # Read from environment variable
 
-while getopts t:n:c:e:s:d ch; do
+while getopts t:n:c:e:s:d:r: ch; do
     case $ch in
         t)  test_run_name=$OPTARG
             ;;
@@ -26,6 +26,9 @@ while getopts t:n:c:e:s:d ch; do
 	# Send manifests to stdout instead of creating resources
         d)  create_resource_command=( cat )
             ;;
+    #if registry is different than rhods-ods-applications
+        r) image_repo=$OPTARG
+            ;;
 
         *)  exit 2
             ;;
@@ -33,8 +36,8 @@ while getopts t:n:c:e:s:d ch; do
 done
 shift $(( OPTIND - 1 ))
 
-if [[ $# -ne 4 ]]; then
-    echo "Usage: $0 [-d] [-n <namespace>] [-t <test-run-name>] [-c <tiny_url_csv_filename>] [-e <enable_notebook_token: true|false>] [-s <shorten_url: true|false>] <num_notebooks> <batch_size> <username> <image_name>" >&2
+if [[ $# -ne 5 ]]; then
+    echo "Usage: $0 [-d] [-n <namespace>] [-t <test-run-name>] [-c <tiny_url_csv_filename>] [-e <enable_notebook_token: true|false>] [-s <shorten_url: true|false>] [-r <image-registry>] <num_notebooks> <batch_size> <username> <image_name> <openshift_url>" >&2
     echo "Environment Variable:"
     echo "TINY_URL_API_TOKEN: (Optional) API token for TinyURL service."
     echo "Set -s to true to shorten url"
@@ -52,6 +55,12 @@ username=$3
 
 # Notebook imagename
 image_name=$4
+
+# Openshift url
+openshift_url=$5
+
+host="${openshift_url%/projects*}"        # get everything before projects
+hub_host=$host
 
 if [[ -z $test_run_name ]]; then
     test_run_name="$(mktemp -u ope-test-"$username"-"$num_notebooks"-XXXXXX)"
@@ -97,9 +106,15 @@ for ((i=0; i<num_notebooks; i+=batch_size)); do
             -p USERNAME="$username"
             -p NAMESPACE="$namespace"
             -p IMAGE_NAME="$image_name"
+            -p OPENSHIFT_URL="$openshift_url"
+            -p HUB_HOST="$hub_host"
         )
         if [[ -n $notebook_token ]]; then
             params+=(-p TOKEN="$notebook_token")
+        fi
+
+        if [[ -n $image_repo ]]; then
+            params+=(-p IMAGE_REPO=$image_repo)
         fi
 
         oc process -f test_resources.yaml --local "${params[@]}" |

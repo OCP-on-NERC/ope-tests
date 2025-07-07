@@ -20,12 +20,12 @@ To execute these tests:
 
 3. Run the test script.
 
-    Use the `create_notebooks.sh` script to run the test. You will need to specify the total number of notebooks to create, the batch size for concurrent requests, and your username. You can optionally provide a name for the test run with the `-t` option; if not, one will be generated for you.
+    Use the `create_notebooks.sh` script to run the test. You will need to specify the total number of notebooks to create, the batch size for concurrent requests, your username, the image name, and the openshift url. The openshift url is the link from openshift AI dashboard. It should look like: https://rhods-dashboard-redhat-applications.apps.project-name.association.assoc.org/projects. You can optionally provide a name for the test run with the `-t` option; if not, one will be generated for you.
 
     For example, to create 100 notebooks in batches of 10 at a time:
 
     ```
-    ./create_notebook.sh 100 10 your_username image_name
+    ./create_notebook.sh 100 10 your_username image_name openshift_url
     ```
 
     To launch notebooks with GPUs, use image `minimal-gpu:2023.1`; edit the test_resources.yaml:

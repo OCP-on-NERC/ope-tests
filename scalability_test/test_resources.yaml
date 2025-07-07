@@ -11,6 +11,13 @@ parameters:
   required: true
 - name: NAMESPACE
   required: true
+- name: OPENSHIFT_URL
+  required: true
+- name: IMAGE_REPO
+  required: true
+  value: "image-registry.openshift-image-registry.svc:5000/redhat-ods-applications"
+- name: HUB_HOST
+  required: true
 - name: PVC_SIZE
   required: true
   value: "1Gi"
@@ -25,7 +32,7 @@ objects:
       notebooks.opendatahub.io/last-image-selection: ${IMAGE_NAME}
       notebooks.opendatahub.io/last-size-selection: X Small
       notebooks.opendatahub.io/oauth-logout-url: >-
-        https://rhods-dashboard-redhat-ods-applications.apps.shift.nerc.mghpcc.org/projects/${NAMESPACE}?notebookLogout=${NOTEBOOK_NAME}
+        ${OPENSHIFT_URL}/${NAMESPACE}?notebookLogout=${NOTEBOOK_NAME}
       opendatahub.io/username: ${USERNAME}
       openshift.io/description: ''
       openshift.io/display-name: ${NOTEBOOK_NAME}
@@ -48,20 +55,20 @@ objects:
                       # set the value to 'true' to use nodes with GPUs
                       operator: In
                       values:
-                        - 'true'
+                        - 'false'
                 weight: 1
         containers:
           - resources:
               limits:
                 cpu: '1'
                 memory: 2Gi
-                # remove this line if no GPU is needed
-                nvidia.com/gpu: '1'
+                # uncomment if gpu is needed
+                # nvidia.com/gpu: '1'
               requests:
                 cpu: '1'
                 memory: 2Gi
-                # remove this line if no GPU is needed
-                nvidia.com/gpu: '1'
+                # uncomment if gpu is needed
+                # nvidia.com/gpu: '1'
             readinessProbe:
               failureThreshold: 3
               httpGet:
@@ -91,10 +98,10 @@ objects:
                                     --ServerApp.password=''
                                     --ServerApp.base_url=/notebook/${NAMESPACE}/${NOTEBOOK_NAME}
                                     --ServerApp.quit_button=False
-                                    --ServerApp.tornado_settings={"user":"${USERNAME}","hub_host":"https://rhods-dashboard-redhat-ods-applications.apps.shift.nerc.mghpcc.org","hub_prefix":"/projects/${NAMESPACE}"}
+                                    --ServerApp.tornado_settings={"user":"${USERNAME}","hub_host":"${HUB_HOST}","hub_prefix":"projects/${NAMESPACE}"}
               - name: JUPYTER_IMAGE
                 value: >-
-                  image-registry.openshift-image-registry.svc:5000/redhat-ods-applications/${IMAGE_NAME}
+                  ${IMAGE_REPO}/${IMAGE_NAME}
             ports:
               - containerPort: 8888
                 name: notebook-port
@@ -106,7 +113,7 @@ objects:
               - mountPath: /dev/shm
                 name: shm
             image: >-
-              image-registry.openshift-image-registry.svc:5000/redhat-ods-applications/${IMAGE_NAME}
+                ${IMAGE_REPO}/${IMAGE_NAME}
             workingDir: /opt/app-root/src
           - resources:
               limits:
@@ -169,7 +176,7 @@ objects:
               - >-
                 --openshift-sar={"verb":"get","resource":"notebooks","resourceAPIGroup":"kubeflow.org","resourceName":"${NOTEBOOK_NAME}","namespace":"$(NAMESPACE)"}
               - >-
-                --logout-url=https://rhods-dashboard-redhat-ods-applications.apps.shift.nerc.mghpcc.org/projects/${NAMESPACE}?notebookLogout=${NOTEBOOK_NAME}
+                --logout-url=${OPENSHIFT_URL}${NAMESPACE}?notebookLogout=${NOTEBOOK_NAME}
         enableServiceLinks: false
         serviceAccountName: ${NOTEBOOK_NAME}
         volumes:

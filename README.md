@@ -264,3 +264,57 @@ project.project.openshift.io "kueue-test-32bf5a" deleted
 
 Deleting log file
 ```
+
+## Kueue GPU Test
+
+The [kueue test](kueue_test) is designed to validate GPU job scheduling using the Kueue queueing system on the cluster.
+
+### Running the Kueue GPU Test
+
+1. Ensure you are logged in to your OpenShift account via the CLI.
+
+2. Ensure you are in the `kueue_test` folder.
+
+3. Make sure the required GPU queue and configuration are set up in your cluster. You may need to apply the provided `kueue-gpu-config.yaml` first:
+
+    ```
+    oc apply -f kueue-gpu-config.yaml
+    ```
+
+4. Submit the GPU job using the provided YAML:
+
+    ```
+    oc apply -f gpu-job.yaml
+    ```
+
+   This will create a job that requests a GPU and is scheduled via Kueue. The job will run `nvidia-smi` to verify GPU access.
+
+5. You can check the job and pod status with:
+
+    ```
+    oc get jobs
+    oc get pods
+    oc logs <pod-name>
+    ```
+
+### Customizing the Test
+
+- The job YAML can be edited to change the GPU type, image, or command as needed.
+- You can add a new localqueue for your own GPU jobs by creating and applying a LocalQueue YAML. For example:
+
+    ```
+    apiVersion: kueue.x-k8s.io/v1alpha1
+    kind: LocalQueue
+    metadata:
+      name: <your-localqueue-name>
+      namespace: <your-namespace>
+    spec: {}
+    ```
+    
+    Apply it with:
+    
+    ```
+    oc apply -f <your-localqueue-file>.yaml
+    ```
+    
+    Then, update your job YAML to reference your new localqueue in the `kueue.x-k8s.io/queue-name` label.

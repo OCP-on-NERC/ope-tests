@@ -1,0 +1,46 @@
+apiVersion: kueue.x-k8s.io/v1beta1
+kind: ResourceFlavor
+metadata:
+  name: gpu
+# spec:
+#   nodeSelector:
+#     nvidia.com/gpu.product: NVIDIA-A100-SXM4-40GB
+---
+apiVersion: kueue.x-k8s.io/v1beta1
+kind: ClusterQueue
+metadata:
+  name: gpu-clusterqueue
+spec:
+  cohort: gpu-cohort
+  namespaceSelector: {}
+  resourceGroups:
+    - coveredResources: ["nvidia.com/gpu"]
+      flavors:
+        - name: "gpu"
+          resources:
+            - name: "nvidia.com/gpu"
+              nominalQuota: 2
+---
+apiVersion: kueue.x-k8s.io/v1beta1
+kind: LocalQueue
+metadata:
+  name: gpu-localqueue
+  namespace: danni-test-94a7cb
+spec:
+  clusterQueue: gpu-clusterqueue
+---
+apiVersion: kueue.x-k8s.io/v1beta1
+kind: LocalQueue
+metadata:
+  name: gpu-localqueue
+  namespace: danni-test-c1d5a1
+spec:
+  clusterQueue: gpu-clusterqueue 
+---
+apiVersion: kueue.x-k8s.io/v1beta1
+kind: LocalQueue
+metadata:
+  name: gpu-localqueue
+  namespace: danni-test-c95174
+spec:
+  clusterQueue: gpu-clusterqueue 
